@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catch the Ball Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        canvas {
+            display: none;
+        }
+        #startButton, #restartButton {
+            padding: 10px 20px;
+            font-size: 20px;
+            color: white;
+            background-color: blue;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #restartButton {
+            display: none;
+        }
+        #result {
+            display: none;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="result"></div>
+    <button id="startButton">Start Game</button>
+    <button id="restartButton">Restart Game</button>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const startButton = document.getElementById('startButton');
+        const restartButton = document.getElementById('restartButton');
+        const resultDiv = document.getElementById('result');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let playerX = canvas.width / 2;
+        let playerY = canvas.height - 50;
+        let playerWidth = 100;
+        let playerHeight = 20;
+        let ballX = Math.random() * canvas.width;
+        let ballY = 0;
+        let ballRadius = 15;
+        let ballSpeed = 3;
+        let score = 0;
+        let isGameRunning = false;
+
+        function drawPlayer() {
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(playerX, playerY, playerWidth, playerHeight);
+        }
+
+        function drawBall() {
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawScore() {
+            ctx.fillStyle = 'black';
+            ctx.font = '20px Arial';
+            ctx.fillText(`Score: ${score}`, 10, 30);
+        }
+
+        function update() {
+            if (!isGameRunning) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawPlayer();
+            drawBall();
+            drawScore();
+
+            ballY += ballSpeed;
+
+            if (ballY + ballRadius > playerY && ballX > playerX && ballX < playerX + playerWidth) {
+                score++;
+                resetBall();
+            }
+
+            if (ballY > canvas.height) {
+                endGame();
+            }
+
+            requestAnimationFrame(update);
+        }
+
+        function resetBall() {
+            ballX = Math.random() * canvas.width;
+            ballY = 0;
+            ballSpeed += 0.5;
+        }
+
+        function resetGame() {
+            score = 0;
+            ballSpeed = 3;
+            resetBall();
+        }
+
+        function startGame() {
+            resetGame();
+            isGameRunning = true;
+            canvas.style.display = 'block';
+            startButton.style.display = 'none';
+            restartButton.style.display = 'none';
+            resultDiv.style.display = 'none';
+            update();
+        }
+
+        function endGame() {
+            isGameRunning = false;
+            resultDiv.textContent = `Game Over! Your score: ${score}`;
+            resultDiv.style.display = 'block';
+            restartButton.style.display = 'block';
+        }
+
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', startGame);
+
+        window.addEventListener('mousemove', (event) => {
+            if (isGameRunning) {
+                playerX = Math.min(Math.max(event.clientX - playerWidth / 2, 0), canvas.width - playerWidth);
+            }
+        });
+
+        window.addEventListener('touchmove', (event) => {
+            if (isGameRunning) {
+                playerX = Math.min(Math.max(event.touches[0].clientX - playerWidth / 2, 0), canvas.width - playerWidth);
+            }
+        });
+    </script>
+</body>
+</html>
