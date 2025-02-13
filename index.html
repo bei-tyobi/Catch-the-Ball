@@ -13,23 +13,26 @@
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            height: 100vh;
+            background: linear-gradient(to bottom, #0000FF, #87CEEB); /* Blue gradient background */
         }
         canvas {
             display: none;
+            background-color: white; /* White canvas background */
+            border: 2px solid black; /* Black border around canvas */
         }
         #startButton, #restartButton {
             padding: 10px 20px;
             font-size: 20px;
             color: white;
-            background-color: blue;
+            background-color: #4CAF50; /* Bright green for buttons */
             border: none;
-            border-radius: 5px;
+            border-radius: 10px;
             cursor: pointer;
             position: absolute;
-            top: 50%;
+            top: 60%; /* Adjusted to avoid overlapping with result */
             left: 50%;
             transform: translate(-50%, -50%);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
         }
         #restartButton {
             display: none;
@@ -37,123 +40,173 @@
         #result {
             display: none;
             font-size: 24px;
+            font-weight: bold;
             position: absolute;
-            top: 40%;
+            top: 40%; /* Adjusted to avoid overlapping with start button */
             left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
+            color: #333; /* Dark text for visibility */
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); /* Subtle shadow for better contrast */
+        }
+        #instructions {
+            position: absolute;
+            top: 30%;
+            left: 50%; /* Center horizontally */
+            transform: translate(-50%, -50%); /* Adjust for proper centering */
+            text-align: left; /* Left-align the text */
+            font-size: 18px;
+            color: #333;
         }
     </style>
 </head>
 <body>
+    <div id="instructions">
+        <p>ゲーム説明</p>
+        <p>画面下部の青いバーを左右に動かして、落ちてくる赤いボールをキャッチしてください。</p>
+        <p>ボールをキャッチするたびにスコアが増加します。</p>
+        <p>ボールを逃すとゲームオーバーです。最高記録を目指して頑張りましょう！</p>
+    </div>
     <div id="result"></div>
     <button id="startButton">Start Game</button>
     <button id="restartButton">Restart Game</button>
     <canvas id="gameCanvas"></canvas>
 
     <script>
+        // Get the canvas and buttons from the DOM
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const startButton = document.getElementById('startButton');
         const restartButton = document.getElementById('restartButton');
         const resultDiv = document.getElementById('result');
+        const instructionsDiv = document.getElementById('instructions');
 
+        // Set canvas size to match the window
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        let playerX = canvas.width / 2;
-        let playerY = canvas.height - 50;
-        let playerWidth = 100;
-        let playerHeight = 20;
-        let ballX = Math.random() * canvas.width;
-        let ballY = 0;
-        let ballRadius = 15;
-        let ballSpeed = 3;
-        let score = 0;
-        let isGameRunning = false;
+        // Define initial positions and sizes
+        let playerX = canvas.width / 2; // Player's initial X position
+        let playerY = canvas.height - 50; // Player's Y position at the bottom
+        let playerWidth = 100; // Width of the player bar
+        let playerHeight = 20; // Height of the player bar
 
+        let ballX = Math.random() * canvas.width; // Random initial X position for the ball
+        let ballY = 0; // Ball starts at the top
+        let ballRadius = 15; // Radius of the ball
+        let ballSpeed = 3; // Initial falling speed of the ball
+
+        let score = 0; // Initial score
+        let isGameRunning = false; // Game state
+
+        // Draw the player paddle
         function drawPlayer() {
-            ctx.fillStyle = 'blue';
-            ctx.fillRect(playerX, playerY, playerWidth, playerHeight);
+            ctx.fillStyle = '#007BFF'; // Bright blue for the player
+            ctx.fillRect(playerX, playerY, playerWidth, playerHeight); // Draw player rectangle
         }
 
+        // Draw the falling ball
         function drawBall() {
-            ctx.fillStyle = 'red';
+            ctx.fillStyle = '#FF6347'; // Tomato red for the ball
             ctx.beginPath();
-            ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
+            ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2); // Draw ball as a circle
             ctx.fill();
         }
 
+        // Display the score on the canvas
         function drawScore() {
-            ctx.fillStyle = 'black';
-            ctx.font = '20px Arial';
-            ctx.fillText(`Score: ${score}`, 10, 30);
+            ctx.fillStyle = '#333'; // Dark text for better visibility
+            ctx.font = '20px Arial'; // Set font size and style
+            ctx.fillText(`Score: ${score}`, 10, 30); // Display score at the top-left corner
         }
 
+        // Main game update loop
         function update() {
-            if (!isGameRunning) return;
+            if (!isGameRunning) return; // Stop updating if the game is not running
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
 
-            drawPlayer();
-            drawBall();
-            drawScore();
+            drawPlayer(); // Draw the player paddle
+            drawBall(); // Draw the falling ball
+            drawScore(); // Draw the score
 
-            ballY += ballSpeed;
+            ballY += ballSpeed; // Move the ball downward
 
-            if (ballY + ballRadius > playerY && ballX > playerX && ballX < playerX + playerWidth) {
-                score++;
-                resetBall();
+            // Check if the ball hits the player paddle
+            if (
+                ballY + ballRadius > playerY && // Ball has reached the paddle's Y position
+                ballX > playerX && // Ball's X position is within the paddle's left edge
+                ballX < playerX + playerWidth // Ball's X position is within the paddle's right edge
+            ) {
+                score++; // Increment the score
+                resetBall(); // Reset the ball's position and speed
             }
 
+            // Check if the ball goes below the canvas
             if (ballY > canvas.height) {
-                endGame();
+                endGame(); // End the game if the ball is missed
             }
 
-            requestAnimationFrame(update);
+            requestAnimationFrame(update); // Continue the update loop
         }
 
+        // Reset the ball's position and speed
         function resetBall() {
-            ballX = Math.random() * canvas.width;
-            ballY = 0;
-            ballSpeed += 0.5;
+            ballX = Math.random() * canvas.width; // Set a new random X position for the ball
+            ballY = 0; // Reset the ball's Y position to the top
+            ballSpeed += 0.5; // Increase the ball's speed slightly
         }
 
+        // Reset the game state
         function resetGame() {
-            score = 0;
-            ballSpeed = 3;
-            resetBall();
+            score = 0; // Reset the score to zero
+            ballSpeed = 3; // Reset the ball's speed to the initial value
+            resetBall(); // Reset the ball position and speed
         }
 
+        // Start the game
         function startGame() {
-            resetGame();
-            isGameRunning = true;
-            canvas.style.display = 'block';
-            startButton.style.display = 'none';
-            restartButton.style.display = 'none';
-            resultDiv.style.display = 'none';
-            update();
+            resetGame(); // Reset game state
+            isGameRunning = true; // Set the game state to running
+            canvas.style.display = 'block'; // Show the canvas
+            startButton.style.display = 'none'; // Hide the start button
+            restartButton.style.display = 'none'; // Hide the restart button
+            instructionsDiv.style.display = 'none'; // Hide the instructions
+            resultDiv.style.display = 'none'; // Hide the result message
+            update(); // Start the update loop
         }
 
+        // End the game
         function endGame() {
-            isGameRunning = false;
-            resultDiv.textContent = `Game Over! Your score: ${score}`;
-            resultDiv.style.display = 'block';
-            restartButton.style.display = 'block';
+            isGameRunning = false; // Stop the game
+            resultDiv.textContent = `Game Over! Your score: ${score}`; // Display the final score
+            resultDiv.style.display = 'block'; // Show the result message
+            restartButton.style.display = 'block'; // Show the restart button
         }
 
+        // Add event listeners for the start and restart buttons
         startButton.addEventListener('click', startGame);
         restartButton.addEventListener('click', startGame);
 
+        // Add event listener for mouse movement to control the player paddle
         window.addEventListener('mousemove', (event) => {
             if (isGameRunning) {
-                playerX = Math.min(Math.max(event.clientX - playerWidth / 2, 0), canvas.width - playerWidth);
+                // Move the player paddle to follow the mouse position
+                playerX = Math.min(
+                    Math.max(event.clientX - playerWidth / 2, 0), // Prevent going out of bounds on the left
+                    canvas.width - playerWidth // Prevent going out of bounds on the right
+                );
             }
         });
 
+        // Add event listener for touch movement to control the player paddle on mobile
         window.addEventListener('touchmove', (event) => {
             if (isGameRunning) {
-                playerX = Math.min(Math.max(event.touches[0].clientX - playerWidth / 2, 0), canvas.width - playerWidth);
+                // Move the player paddle to follow the touch position
+                playerX = Math.min(
+                    Math.max(event.touches[0].clientX - playerWidth / 2, 0), // Prevent going out of bounds on the left
+                    canvas.width - playerWidth // Prevent going out of bounds on the right
+                );
             }
         });
     </script>
